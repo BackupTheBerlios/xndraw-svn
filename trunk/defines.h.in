@@ -1,0 +1,141 @@
+// -*- c++ -*-
+/* Copyright (C) 2006 John O'Driscoll - biggerbumme@ yahoo.co.in
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
+
+#ifndef NCOORDS_DEFINES_H
+#define NCOORDS_DEFINES_H
+
+#include "config.h"
+//move all to configure.ac
+//microseconds
+
+
+#define PRINT_STR(exp) STREAMISE(exp, std::cout)
+#define PRINT_STR_ADDRESS(exp) OBJ_TO_STREAM_WITH_ADDRESS(exp, &(std::cout))
+
+#define STREAMISE( exp, stream) EXP_TO_STREAM(exp, &stream)
+#define PRINT_STRING(exp) STREAMISE(exp, std::cout)
+
+#define XNDRAW_GET_PREF(pref, dummyvalue) X3_draw::instance().get_prefvalue(pref, dummyvalue)
+//avoid const char* value, use std::string
+//TODO: template specialisation for pointer values
+//for now create a new pointer, or one you know'll persist and clean it up on quit/ resetting
+#define XNDRAW_SET_PREF(pref, value) X3_draw::instance().set_prefvalue(pref, value)
+#define XNDRAW_HAVE_PREF(pref) X3_draw::instance().have_pref(pref)
+
+#define XNDRAW_DEFAULT_SCREEN_X 1024
+#define XNDRAW_DEFAULT_SCREEN_Y 768
+
+#define XNDRAW_ICONDIR "@pkgicondir@"
+#define XNDRAW_XMLDIR "@pkgxmldir@"
+#define XNDRAW_DATADIR "@pkgdatadir@"
+#define XNDRAW_INSTALLPREFIX "@xnPREFIX@"
+
+//todo: MORE APPRoPRIATE icons... - though this is fun for now...
+#define DRAW_SIMPLE_CLICK_ICON "@pkgicondir@/accessories-text-editor.png"
+#define DRAW_FREEHAND_ICON "@pkgicondir@/document-send.png"
+#define DRAW_BEZIER_ICON "@pkgicondir@/gtk-execute.png"
+#define SELECT_BOX_ICON "@pkgicondir@/edit-find.png"
+#define CLEAR_PATH_ICON "@pkgicondir@/editclear.png"
+//THESE OK
+#define ZOOM_IN_ICON "@pkgicondir@/gtk-zoom-in.png"
+#define ZOOM_OUT_ICON "@pkgicondir@/gtk-zoom-in.png"
+
+
+#define mMAXFLAG 1 << ((8 * SIZEOF_INT) -2) 
+// these are runtime prefs - set the defaults in a file 
+#define MAX_NODE_COUNT 256L
+#define DRAWTHREAD_WAIT_SLEEPTIME 10000 
+#if ENABLE_EXTRA_VERBIAGE
+#define XNDRAW_VERBOSE 1
+#endif
+#if DEBUG
+#define _GLIBCXX_CONCEPT_CHECKS 1
+#define DEBUG_VERBOSE
+#endif /*DEBUG*/
+
+//which map(is it a hash map?)
+#if HAVE_HASHMAP 
+//which hash_map(and which hash)
+#if  HAVE_UNORDERED_MAP
+#define USE_UNORDERED_MAP
+#else
+#if HAVE_TR1_UNORDERED_MAP
+#define USE_UNORDERED_MAP
+#else
+#if HAVE_EXT_HASH_MAP
+#define USE_EXT_HASH_MAP
+#else
+#error "configuation error : HAVE_HASHMAP defined but no actual candidate found file a bug report!"
+#endif //HAVE_EXT_HASH_MAP
+#endif //HAVE_TR1_UNORDERED_MAP
+#endif//HAVE_UNORDERED_MAP
+#else //!HAVE_HASHMAP 
+#define USE_STD_MAP
+#endif
+
+  
+
+
+namespace xNDRAW{
+  
+  
+  
+  //in Drawingbase etc
+  //A BIT CONFUSED, and mostlythe first 4 used
+  enum paintmode{
+    PAINTMODE_NONE=0,
+    DRAW_DIRECT_TO_WINDOW = 1,
+    DRAW_TO_BACKBUFFER = 2,
+    PAINT_BUFFER=DRAW_TO_BACKBUFFER << 1,
+    PAINT_VISUAL = PAINT_BUFFER <<1 ,
+    DRAWING_DIRECT = PAINT_VISUAL <<1,
+    DRAWING_FROM_HISTORY = DRAWING_DIRECT << 1,
+    SELECTEDIT_PATH = DRAWING_FROM_HISTORY << 1,
+    SELECTEDIT_MAP = SELECTEDIT_PATH << 1,
+    DRAW_EDIT_BUFFER = SELECTEDIT_MAP<< 1
+  };
+
+ 
+  //from drawbuffer.h! - should have been with Drawtool
+
+  enum {
+    DRAWINGSET_LINE_UNDER_MOUSE = 0,
+DRAWINGSET_LINE_CORRECT = 1
+  };
+
+  enum draw_init_type{
+    XNDRAW_INIT_AS_DRAWING = 1,
+    XNDRAW_INIT_AS_DRAWINGSET = 1 << 1,
+    XNDRAW_INIT_WITH_CLICK = 1 << 8,
+    XNDRAW_INIT_ON_INIT = 1 << 9
+  };
+  
+
+  
+ 
+  
+  enum bufferstatus{
+    BUFFER_STATUS_OK,
+    BUFFER_STATUS_NULL
+  }; 
+  
+}// namespace xNDRAW
+
+
+#endif /*XNDRAW_DEFINES_H*/

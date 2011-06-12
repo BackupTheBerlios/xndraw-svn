@@ -1,0 +1,10 @@
+0.0.3
+	Change considered: change generation for PACKAGE_* etc macros? - when the library itself is being compiled, as well as linked against, they are currently undef'ed
+	either
+Define a macro in each cc file COMPILING_STUPIDAPP or something
+	and conditionally undefine in undefs.h
+	or separately include from the cc files only and forget about undefs.h
+
+0.0.2
+	library of various functions created
+	non-portable stuff like querying file system

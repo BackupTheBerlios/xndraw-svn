@@ -1,0 +1,111 @@
+0.2.5-0
+	preparing first public outing for xndraw - establishment of public repos at berlios.de. So added a 0 at the front of version no while its still possible, to better reflect where it's at
+
+
+
+2.4.3
+	more pathsection esp debugging, and wrappin debug code in #ifdef. Added bouncenav.cc and bouncenav.h. as beginning of attempt to find the outside, and if a pt is outside by 'bouncing off the walls' => class Bounce
+	PATH_COMBINE_OR now seems to handle holes, or at the least does so in some cases, and AND and XOR also, so we can move on to PATH_COMBINE_DIFF
+	still to do: fix handling of subpath so one where the first and last points are identical(like output from combine(PATH_COMBINE_OR) etc), so we can feed output back into another operation
+	             fix case where section.endextra '==' *((section.end()-1)).first or 
+	section.startextra'==' *((section.begin())).first. This is often the case with freehand drawing which returns integral values often only one pixel apart, so two lines crossing are likely to cross at a point of one or both. extend intersection operator<< to include supernumaries which will become more likely with multiple freehand paths(for same reasons as above), and check that all intersection functions do search in supernumaries where they exist
+
+	there are still bugs in resolving the outside OR path, from which everything else follows. I was wondering if the fault lay in iterating over the segments in SubPath or Section<SubPath>, but it seems not. The problem is probably in SubPath::point_within() which tests if a point is inside a closed path, and which is definitely flaky/incomplete. Needs to count the no of self-intersections, and see ifthe path 'goes inside' the outside outline at some or all of these. should probably create Sections and SectionShapes to find the OR path of each individual path which does, and then make the test, as then an odd number of line crossings on each side means inside, even numbers, or 0 on one side of point means outside, whereas with the current test odd is definitely inside, 0 on one side of point is outside, but even is ambiguous. DIFF is still a jumble, but wait til the others work reliably b4 fixing too much
+
+
+2.4.2
+	further work to flesh out the boolean path operation implementation. This now works, buggily, at least in the simple case, and provides proof of concept, but still too unreliable. eg looks like the move click at subpath start is being ignored in output when a section is reversed, problems(still) finding the outlines of holes in the OR path, and other shapes, mostly problems in determining which way to turn, but a systematic approach nonetheless developing. Also warts in the Segment<U>::pointside() function, which are slowly being resolved. still to watch: vertical segments. 
+
+2.4.1
+	added subpath.cc, subpath.h, pathsection.h and pathsection.tcc in libncoords, as implementation of boolean path operations(OR, AND, XOR and DIFF). subpath.* declarates classes PathFragment(an arbitrary piece of a simple_click_history), and Subpath, which specialises PathFragment as a complete subpath, from move_to to move_to().
+	pathsection.* declares the templates Intersection<PATH>(an intersection of 2 or more PATH - by default PATH==Subpath), Section<PATH>(ie a section of PATH between 2 Intersection<PATH>), and SectionGroup<PATH> which creates and contains the Intersections and Sections,finds the outline(ie the OR'ed path), determines how many paths must be crossed from the rest of the Section to get to the outside, and then generates an output path(simple_click_history). 
+	Still plenty wrinkles, and the output method( = SectionGroup<PATH>::add_to_path())still under construction, but we have proof of concept. The main uncertainty is whether the choose_adjacent.*() methods may sometimes be unreliable in determining whether we look for biggest/smallest angle to stay on the outside. Visual testing/inspection once the output method is working should show what(if any) types of outline/shape currently not working correctly. self-intersecting sections, and subpaths that self-cross generally(topologically twisting themselves) are what I'm thinking most likely to be in need of tweaking
+	So to create some boolean composite of 1, 2 (or more) simple_click_history, its combine.*() methods call as_subpaths(), to split it/them into 'flattened' SubPaths (ie beziers converted to straight segments), which are then tested against each other for intersection and overlapping by static methods of SectionGroup, which create a SectionGroup for each set of overlapping paths, and then each group calls SectionGroup::combine(), which in turn generates a new simple_click_history
+
+
+2.4.0
+	new minor version, since the changes mount up
+	consolidated filedialog calls, so the can be executed with a single line of code
+see FileDialogManager::do_filedialog() and FileDialogManager::do_filedialog_slot()
+do_filedialog_slot takes a sigc::slot<void, string> (or maybe <string,void>, anyway void return, string argument). template versions FileDialogManager::do_filedialog_with_arg<EMITTER, ARG>()
+and FileDialogManager::do_filedialog_slot_with_arg<SLOT, ARG>() I'll  do soon
+	Fixed more Bezier drawing bugs, in particular, the erroneous handles sent with a bezier click after a move_to(). There is still a strange bug with rendering paths imported from svg, even though the gui representation of the path looks OK(as does svgread.py's intermediate output, when rendered according to the pattern it has a tailwhere an end point is offset, often by a lot. I have to add an explicit way of calling svgread.py to convert into .xnd
+	It would also probably help to make xndraw's own .xnd output more similar to svgread.py, which is a lot more human friendly, but not until that renders reliably
+Beginning work on a README	to get this thing out into the world
+2.3.8
+
+new fixes and breakages!
+	path import and export work, including from svg(except, issues with scaling etc first and last point
+	lost time finoodling with npathframe/pathshape - new classes to describe shapes got to get something going , then there is a start to improve - added tests in Segment<COORDS> to support testing paths to see if they coincide. Need to be able to tell whether a point is inside a shape(draw a series of radiating lines and see if they cross A segment from path in both directions, and that in each direction they cross an odd amount of times. Time consuming if you have lots of points and lots of shapes(TESTING the bounding box first would help)
+	moved buffer into pingbase. 
+	More of the backbuffer support could go there, including guidraw out of Drawingbase, which would allow it to just draw to a single buffer, uncomplicating it.
+	ping_window (or an intermediate base class) can give it a cairo_surface_t from the backbuffer 
+	2.3.7
+long list of things don't work, some may be ill-conceived, we'll see
+	returning after abbreak
+	fixed: bezier drawing
+
+
+2.3.6
+	rewrote bgrender code in Drawingset to use Pathproducer etc. 
+	Many warts and wrinkles to resolve, doesnt respect flip etc, can't use selection. The underlying transfrom and predicate machinery need testing, but should be able to handle flip, selection etc, once frontend interfaces extended
+
+2.3.5
+	left to do this bout: 1:fix fill_history code in Drawingset
+	2: triple buffer and complete more of colour overhaul - menus/buttons to set a png for one of roles(triple buffering is done and seems to be working30062010)
+	3make Rosydraw work: vfunc not working as expected with this
+
+2.3.4
+overhauiled colour in drawingbase, adding ColourManager, and abstractions of varios flat, gradient, png fills. discovered that I had notadded a triple bufferas beleived, so bumping version ang doing that
+
+2.3.3
+	time properly to abstract path cloning and transformation, so that PathPredicates and PathTransformers can slot in the api, to facillitate pattern variations, and so there is one only function for rendering a path to a graphics context. In the long run Drawingbase maybe should be recast as a template, with a graphics context as a template param. The context will be expected to have the Cairo::Context api => to add support for somw ther similar library providing a 'path drawing api', write some specialisations.
+	Start by fixing the commands on the pattern menu(stroke_path etc, as well as flip and the rest-which of these are Drawingset specific, and which general to RosyDraw etc as well
+	switch drawing on in  RosyDraw(currently behaving like Drawing, overload draw_*()
+	Other Obvious Bugs: 
+	1)	paint_white() doesn't work, since changes to buffer, have to clear the real source buffer
+	2)	path selection api sucks(fix the horror xndrawdata to do something useful, like displa a choosable list from saved_paths, with pathid, poinntcount, bbox topL, bottomR, and a possibly scaled picture(if Gtk::CellRenderer can be understood) -maybe show a popup of the path you are over
+
+2.3.2
+	make distcheck still failing on make distclean. make install and  maake uninstall work
+	added scale/rotate/move for draw->history, with a variety of settings:centred on click, centred on path beginning, x and y proportional, constrained to a single dimension:TODO: debug option switching(may need a flag variable in the calls), add flip(pathflipping code exists already) and skew/perspective, and make all this work with the selection or some other PointPredicate(as with all other path manipulations and rendering/iterating
+	used sigc::slot to make xn_instruction work. Created a class to wrap the drawingbase api, or a subset(the 'toplevel' calls made in by ping_window), in order to save a 'render sequence' (in order to replay them with a different surface-to eg save an svg file with paths in the same colours/linewidts etc as the internal buffer was drawn with(other code would redraw the current path in the current colour/lw)
+TODO: some testing -currently this code not called, though ping_window has a member to do it.See how much memory it sucks, determine which drawing commands should be wrapped(all the Cairo::Context statesetting(set_colour, operator, linewidth et al should be, and saving points to history, and changing history, but not 'subsidiary' drawing commands called by the  'toplevel' calls (ie all the iterated (lin|mov|curv)e_to(double, double..) that come from a draw_to(coords). See if it can be left switched on, 
+
+
+2.3.1
+	2.3.0 dist builds (including to build dir?)any breakage is in 'test' or other non-essential, so make -k install should work. All necessary files are included in pkg from make dist
+	main problem is that  doc Makefile not working correctly-  docs building even when they shouldn't, which will be a problem in absense of doxygen
+	Need to make a distribution so I can see what problems people encounter
+
+2.3.0
+	fix a drawing bug, so now base pattern in 3-,4-,6-fold(works correctly)
+	many more fixes and changes:
+	changing from stroke_preserve() to stroke() lead to maJOR SPEED UP(DUH!)
+	wrote as yet untested (core of)background renderer - which works mostly...(need to debug locks on Nodedeq:over complex, and they block on 2nd bg render)
+
+
+2.2.0
+	after a long break, come back to fix up a 'few' bugs
+	changed to using cairo_path_t to assemble paths and cairo_matrix*() to manipulate, and then changed it back - 1 too slow, and also I was probably applying the transforms in wrong order, so results were a little unex[pected
+	starting to look at how to really create a gimptool based on xndraw - that can be used with any brush derived tool. Since thiwould need to override parts of the tool API, which the plugin API, angd the public libraries libgimp* give no access to. I think the only way is to rewrite the (many)Makefile.am's from gimpsrc/app to make the static libries gimp is linked against into libtool libraries, either leaving the files the are never part of a libraries currently as they are, except linked against the dlls, and to writea new library with the new tool instances and class classes(like doing python api with these static tables), and whatever part of toolcontrol and management api I'd have to also override so this can work. I guess I could also create a static library and add it to the linklist
+
+
+
+2.06	drawdeque now holds basetype pointer(Drawingbase*)added Paintable as a back_buffered Drawingbase inheritor  --  needs testing
+
+2.04	*elevated* deqC fom typedef to inheritor of deque<coords*>and 
+	added poointer deletion to deqC Dtor and deqC::clear()
+	
+	keeping management of coords pointers with their containers and 
+	rethinking whole idea of passing ncoords around as pointers
+	since the containers are dynamic arrays anyway
+	any orphan coords (as against coords*) without a container
+	would die as it went out of scope and
+	avoid the bug where same address pointed to in more than one container
+	can cause aany number of side effects when one container is modified
+
+	rearranged compilation order in Makefile.am and now click_history can return to libNcoords
+
+
+	2.03: click_history moved into libNcoords and back again - link errors??

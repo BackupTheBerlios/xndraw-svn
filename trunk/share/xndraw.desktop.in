@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Xndraw
+Comment=Draw tiling symmetries
+Exec="@prefix@/bin/xndraw"
+Icon=@prefix@/share/xndraw/x3drawicon.png
+Terminal=false
+Type=Application
+Categories=Accessories;Graphics
+StartupNotify=false
