@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui>
+  <menubar name='MenuBar'>
+    <menu action='MenuFile'>
+      <menu action='MenuExport'>
+        <menuitem action='Export_clickpath'/>
+        <menuitem action='Export_nodemap'/>
+      </menu>
+      <menuitem action='Quit'/>
+    </menu>
+  </menubar>
+</ui>
+
