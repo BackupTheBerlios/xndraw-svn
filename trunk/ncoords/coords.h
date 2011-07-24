@@ -48,6 +48,16 @@ coordinate classes and functors to manipulate them
 //#define DEBUG_NEARLY_EQUAL 1
 
 namespace NCOORDS{
+
+  template <typename ITER, typename CONTAINER>
+  CONTAINER& to_ptr_container(ITER first, ITER last, CONTAINER& result){
+typedef typename CONTAINER::value_type value_type;
+    for(;first !=last;first++){
+      result.push_back(const_cast<value_type>(&(*first)));
+    }
+    return result;
+  }
+
   /**
 is the difference between 2 floating pt numbers less than a threshold
    */

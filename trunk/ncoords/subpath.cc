@@ -247,7 +247,10 @@ if we really need
 Occasional path blows up with invalid range later, making it hard to determine the bad value was originally created
    */
 SubPath::SubPath(simple_click_history* p, iterator start, iterator finish):
-    PathFragment(p,start, finish){    
+    PathFragment(p,start, finish),
+      intersectioncache(NULL),
+sectioncache(NULL),
+      shapescache(NULL){    
  #if CHECK_SUBPATH_SECTION
   std::cerr<< "Subpath(): printing point types:\n";
   for(iterator checkstart=begin();checkstart != end();checkstart++){
@@ -374,14 +377,7 @@ void SubPath::get_self_intersections(std::deque<std::pair<std::pair<SubPath*, un
 	throw xn_Error("flatten path b4 get_intersections()");
       }
       std::pair<Segment<coords*>,iterator> wpair=get_segment_and_iter(w,alwaysclosed);
-#if CHECK_SUBPATH_SECTION
-#if XNDRAW_VERBOSE
-      if((counter % 200) ==99){
-		std::cerr<<"comparing segments\nours: "<<wpair.first<<"\ntheirs: "<< seg<<std::endl;
-      }
-      counter++;
-#endif
-#endif
+
       if((w==b4)||(w== after) || (wpair.second==b4)||(wpair.second== after)){
 	w=wpair.second;continue;
       }

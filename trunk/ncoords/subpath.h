@@ -121,19 +121,56 @@ class SubPath: public PathFragment{
     typedef simple_click_history::iterator iterator;
     //typedef ptrdiff_t 
     typedef simple_click_history::difference_type difference_type;
+  typedef Section<SubPath> section_type;
+typedef SectionShape<SubPath> shape_type;
+typedef Intersection<SubPath> intersection_type;
 
     typedef std::pair<SubPath*, unsigned int> path_offset_type;
     typedef std::deque<std::pair<path_offset_type,path_offset_type> > intersection_result_type;
-
+  typedef std::deque<Section<SubPath> >::iterator section_iterator;
   protected:
-   
+  //lazy init
+  ///the subpath must not change during its life
+  ///its a type to iterate over a section of path without copying
+  std::set<Intersection<SubPath> >* intersectioncache;
+std::deque<Section<SubPath> >* sectioncache;
 
+  std::deque<std::pair<SectionShape<SubPath> , int> >* shapescache;
+
+  void destroy_caches(){
+    if(intersectioncache){
+      delete intersectioncache;
+      intersectioncache=NULL;
+    }
+    if(sectioncache){
+      delete sectioncache;
+      sectioncache=NULL;
+    }
+if(shapescache){
+      delete shapescache;
+      shapescache=NULL;
+    }
+  }
+  void clear_caches(){
+    if(intersectioncache){
+    intersectioncache->clear();
+    }
+    if(sectioncache){
+    sectioncache->clear();
+    }
+    if(shapescache){
+     shapescache->clear();
+    }
+  }
   public:
     
     SubPath(simple_click_history* p, iterator start, iterator finish);
     template <typename ITERATOR>
     SubPath(simple_click_history* p, ITERATOR start, ITERATOR finish):
-      PathFragment(p,start, finish)
+      PathFragment(p,start, finish),
+      intersectioncache(NULL),
+      sectioncache(NULL),
+     shapescache(NULL)
     {    
       if(!true_subpath()){
 	throw xn_Error("invalidSubPath");
@@ -141,7 +178,9 @@ class SubPath: public PathFragment{
     }
 
     //default copy constructor ok
-    ~SubPath(){}
+    ~SubPath(){
+      destroy_caches();
+    }
    
     void get_self_intersections(intersection_result_type& outcontainer);
 
@@ -149,6 +188,101 @@ class SubPath: public PathFragment{
 
     void get_intersections(intersection_result_type& outcontainer, 
 			   SubPath& other, unsigned int otherindex);
+
+  ///should this be 'lazily' cached? 
+  const std::deque<Section<SubPath> > as_sections()const;
+
+  void create_intersectioncache(){
+    intersectioncache=new std::set<intersection_type>;
+intersection_result_type inters;
+    get_self_intersections(inters);
+    if(inters.size()){
+      Intersection<SubPath>::add_intersections(*intersectioncache,inters);
+    }
+  }
+
+protected:
+
+  std::pair<section_iterator, int> find_outside_section(){
+  //const SubPath* otherpath(NULL);
+    if(!sectioncache){create_sectioncache();}
+    
+      section_iterator first= sectioncache->begin();
+      section_iterator last= sectioncache->end();
+     
+      for(;first != last; first++){
+	const Section<SubPath>& current= *first;
+	std::pair<bool, int> outside = current.is_outside(this);
+	if(outside.first){
+	  return std::pair<section_iterator, int>(first, outside.second);
+	}
+      }
+      throw xn_Error("no section found outside?");
+}
+
+
+public:
+
+  std::deque<Section<SubPath> > as_sections(){
+    typedef std::deque<Section<SubPath> > result_type;
+    result_type result;
+    if(!intersectioncache){
+      create_intersectioncache();
+    }
+    if(!intersectioncache){throw xn_Error("cache creation failure");}
+    if(!(intersectioncache->size())){
+      typedef std::pair<Intersection<SubPath>*, unsigned int> pr_type;
+      Section<SubPath> mono(this, pr_type(NULL, 0), pr_type(NULL, end()-begin()));
+      result.push_back(mono);
+    }
+    else{
+      std::deque<Intersection<SubPath>*> ptr_inters;
+      ptr_inters= to_ptr_container(intersectioncache->begin(), intersectioncache->end(), ptr_inters);
+      std::deque<unsigned int> offsets;
+      for(std::deque<Intersection<SubPath>*>::const_iterator qw=ptr_inters.begin(); qw!= ptr_inters.end();qw++){
+	offsets.push_back((*qw)->get_first_offset());
+	offsets.push_back((*qw)->get_second_offset());
+      }
+      //sort first?
+      Section<SubPath>::add_path_sections(this,ptr_inters, offsets,*intersectioncache, result);
+    }
+    return result;
+  }
+
+std::deque<SectionShape<SubPath> > get_shapes(){
+  std::deque<SectionShape<SubPath> > result;
+  typedef std::deque<std::pair<section_type*,int> > tmpshape_container;
+  if(!sectioncache){
+    sectioncache=new std::deque<section_type>;
+    if(!sectioncache){
+      throw xn_Error("out of memory");
+    }
+    *sectioncache=as_sections();
+  }
+  if(!(sectioncache->size())){throw xn_Error("empty subpath?");}
+  else if(sectioncache->size()==1){
+    std::pair<section_type*,int> outlineall(&(*(sectioncache->begin())), (int)SECTION_END);
+    tmpshape_container shapesections;
+    shapesections.push_back(outlineall);
+  shape_type allshape(shapesections);
+    shapescache->push_back(allshape);
+  }
+  else{
+    //could skip the above and just make a SectionGroup?-but then problem(is_outside) goes recursif
+    throw xn_Error("finishme");
+  }
+  return *shapescache;
+  }
+
+  const std::deque<SectionShape<SubPath> > get_shapes()const{
+    throw xn_Error("finishme");
+  }
+ /**
+get the outside outline
+   */
+  SectionShape<SubPath> get_OR_shape()const{
+throw xn_Error("finishme");
+  }
 
     /**
 from a deque of Intersections,

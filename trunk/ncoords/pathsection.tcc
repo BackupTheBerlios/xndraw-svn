@@ -1191,12 +1191,6 @@ void SectionGroup<PATH>::create_shapes(){
     }
   }
 
-template<typename PATH>
-void SectionGroup<PATH>::mark_unmarked_sections(){
-  create_shapes();
-}
-  
-
   template<typename PATH>
   void SectionGroup<PATH>::mark_adjacent_sections(Section<PATH>* markfrom){
     if(!markfrom){throw xn_Error("NULL arg");}
@@ -1610,10 +1604,39 @@ int SectionGroup<PATH>::compare_type(const PATH* p)const{
       throw xn_Error("path not in set");
     }
 
+
+  template<typename PATH>
+  void 
+  Section<PATH>::add_path_sections(PATH* pat, 
+				   const std::deque<Intersection<PATH>*>& pathinters,
+				   const std::deque<unsigned int>& offsets,
+				   const std::set<Intersection<PATH> >& intersections,
+				   std::deque<Section<PATH> >& outsections){
+unsigned int offset(-1), countforsegment(0);
+      typedef std::pair<Intersection<SubPath>*,int> interpair_type;
+      interpair_type startinter(NULL, INTERSECTION_NONE);
+      for(std::deque<unsigned int>::const_iterator offiter = offsets.begin(); 
+	  offiter != offsets.end(); offiter++){
+	unsigned int next=*offiter;
+	if(offset==next){countforsegment++;}
+	else{countforsegment=0;}
+	offset = next;
+	interpair_type  endinter= find_intersection_at(intersections.begin(), intersections.end(),
+						       pat, offset,countforsegment);
+	Section sector(pat, startinter, endinter);
+	outsections.push_back(sector);
+	startinter= endinter;
+      }
+      Section sector(pat, startinter,interpair_type(NULL, INTERSECTION_NONE));
+      outsections.push_back(sector);
+  }
+
 template<typename PATH>
 void SectionGroup<PATH>::add_path_sections(PATH* pat, 
 			   const std::deque<Intersection<PATH>*>& pathinters,
 			   const std::deque<unsigned int>& offsets){
+  Section<PATH>::add_path_sections(pat, pathinters, offsets,intersections,sections);
+  /*
       unsigned int offset(-1), countforsegment(0);
       typedef std::pair<Intersection<SubPath>*,int> interpair_type;
       interpair_type startinter(NULL, INTERSECTION_NONE);
@@ -1625,13 +1648,13 @@ void SectionGroup<PATH>::add_path_sections(PATH* pat,
 	offset = next;
 	interpair_type  endinter= find_intersection_at(intersections.begin(), intersections.end(),
 						       pat, offset,countforsegment);
-	///@todo: unreliable, need to know which pair in endinter and startinter
 	Section<PATH> sector(pat, startinter, endinter);
 	sections.push_back(sector);
 	startinter= endinter;
       }
       Section<PATH> sector(pat, startinter,interpair_type(NULL, INTERSECTION_NONE));
       sections.push_back(sector);
+  */
     }
 
 template<typename PATH>
@@ -1825,17 +1848,26 @@ template<typename PATH>
       }
       done.insert((*w).first);
     }
-    for(inter_iterator inter= outcontainer.begin();inter !=outcontainer.end();inter++){
-      Intersection<PATH> tmp(*inter);
-      coords tmpinter=tmp.get_intersection();
+    Intersection<PATH>::add_intersections(intersections, outcontainer);
+}
+
+ template<typename PATH>
+ template<typename CONTAINER>
+  void Intersection<PATH>::add_intersections(CONTAINER& outinters,
+					     typename PATH::intersection_result_type rawdata){
+   typedef typename PATH::intersection_result_type::const_iterator raw_iterator;
+   typedef typename CONTAINER::const_iterator intersection_iterator;
+   for(raw_iterator inter= rawdata.begin();inter !=rawdata.end();inter++){
+     Intersection<PATH> tmp(*inter);
+     coords tmpinter=tmp.get_intersection();
       ///@todo => warts on 'supernumaries'(ie more pair<PATH*,size_t> path/offsets thru same intersection)
       ///Wart no1: a coords can be 'equal'(really where (get_distance(&other) <= coords::min_radius()) 
       ///to 2 others, which are not 'equal' to each other, becos they're further than min_radius() apart, 
       ///ie different results depending on the order encountered.If middle one comes first 
       ///it eats both, otherwise only 1 will go! location will be (a bit)different too
       bool unhandled(true);
-      for(intersection_iterator iter=intersections.begin();
-	  iter != intersections.end();iter++){
+      for(intersection_iterator iter=outinters.begin();
+	  iter != outinters.end();iter++){
 	coords tmpother=(*iter).get_intersection();
 	if(tmpinter.get_distance(&tmpother) <= coords::min_radius() ){
 	  //compiler demands unconsting?? gcc-4.4
@@ -1846,9 +1878,9 @@ template<typename PATH>
 	}
       }
       if(unhandled)
-	add_intersection(tmp);
+	add_intersection(outinters, tmp);
     }
-}
+ }
 
   template<typename PATH>
   void Intersection<PATH>::merge_intersection(const Intersection<PATH>& inter){
@@ -1874,12 +1906,20 @@ template<typename PATH>
     }
   }
 
+template<typename PATH>
+template<typename CONTAINER>
+void Intersection<PATH>::add_intersection(CONTAINER& intersections,
+					  const Intersection<PATH>& inter){
+  typedef typename CONTAINER::const_iterator it_iterator;
+  for(it_iterator w= intersections.begin(); w != intersections.end(); w++){
+    if (inter== *w){return;}
+  }
+  intersections.insert(inter);
+}
+
   template<typename PATH>
   void SectionGroup<PATH>::add_intersection(const Intersection<PATH>& inter){
-    for(const_intersection_iterator iter= intersections.begin(); iter != intersections.end();iter++){
-      if (inter== *iter){return;}
-    }
-    intersections.insert(inter);
+    Intersection<PATH>::add_intersection(intersections, inter);
   }
 
   template<typename PATH>
@@ -2083,7 +2123,7 @@ std::deque<Section<PATH>* > insections=collect_inside_sections();
 	 SectionShape<PATH> OR_outline(OR_sections);
 	 add_OR_shape(OR_outline);
        }
-       mark_unmarked_sections();
+       create_shapes();
        return -groupside;
      }
 
@@ -2129,6 +2169,7 @@ Section<PATH>::segment_at(typename Section<PATH>::signed_size_type pos){
 	  (wpath != nakedpaths.end()) && (!excluded);wpath++){
 	//if this a problem, reinstate is_outside, which is simpler
 	//std::pair<bool, int> pathside = current.is_outside(*wpath);
+	//after first fixing is_outside
 	std::pair<bool, int> pathside = current.can_bounce_outside(*wpath);
 	if(!(pathside.first)){excluded=true;}
 	else{

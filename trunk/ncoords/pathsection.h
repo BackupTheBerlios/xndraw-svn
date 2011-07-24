@@ -220,6 +220,16 @@ how many paths cross at intersection
     size_type pathcount()const{
  return supernumaries.size() +2;
     }
+
+
+template<typename CONTAINER>
+static void add_intersection(CONTAINER& outinters,
+		      const Intersection& inter);
+
+template<typename CONTAINER>
+static void add_intersections(CONTAINER& outinters,
+			      typename PATH::intersection_result_type rawdata);
+
     /**
 currently may contain dupes:just naively copies
      */
@@ -413,6 +423,11 @@ describes a section of a PATH between two (possibly NULL) Intersection* .
    
     */
     static bool has_unmarked_sections(const std::deque<Section >& sections);
+    static void add_path_sections(PATH* pat, 
+				  const std::deque<Intersection<PATH>*>& pathinters,
+				  const std::deque<unsigned int>& offsets,
+				  const std::set<Intersection<PATH> >& intersections,
+				  std::deque<Section >& outsections);
 
     int get_joinend(const intersection_type& inter)const{
       int res(0);
@@ -1213,7 +1228,7 @@ and there are both recursive and non-recursive variants possible
 @return=> does the intersection contain a left and a right path
 */
       bool is_DIFF_intersection(const intersection_type& inter)const{
-      std::deque<PATH*> interpaths=inter.get_paths();
+       std::deque<PATH*> interpaths=inter.get_paths();
       bool have_left(false), have_right(false);
       for (typename std::deque<PATH*>::const_iterator w= interpaths.begin();
 	   w != interpaths.end(); w++){
@@ -1425,13 +1440,8 @@ else return those where(crossingcnt == sector.crossings)
      */
     std::deque<Section<PATH>*> get_unused_sections(int crossingcnt =-1);
 
-    /**
-       iterate over sections, setting @code crossings @endcode
-       by their proximity to those Section<PATH> of sections that
-       have been previously determined to be on the outside
-       (ie the path that would be   returned by PATH_COMBINE_OR
-    */
-    void mark_unmarked_sections();
+   
+    
     /**
        find all sections adjoining markfrom, and for each, if unmarked, set crossings  to markfrom.crossings+1
      */
@@ -1502,11 +1512,12 @@ std::deque<const Section<PATH>*> get_marked_sections(int markwanted=0)const{
   return res;
 }
     /**
-set crossings for all the sections that surround 
-a contiguous undivided area
-error if any are found to have smaller positive crossings than markfrom
-cal;l repeatedly from mark_unmarked_sections()
-*/
+       set crossings for all the sections that surround 
+       a contiguous undivided area
+       error if any are found to have smaller positive crossings than markfrom
+       call repeatedly from create_shapes()
+    */
+    
     void mark_shapelet(const Section<PATH>& markfrom);
 
     std::deque<PATH*> get_paths()const{

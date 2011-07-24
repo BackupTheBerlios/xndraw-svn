@@ -1,6 +1,21 @@
 [this file needs revision]
 
-The idea of xndraw is an artist's tool to create tilable patterns and wallpapers(and some other patterns based on rotational symmetry, like some used in Roman mosaic) by freehand drawing. It should be intuitively easy, and a joy to use, but also versatile and capable enough to be a useful tool, to, for example, create a tile shape for use by a ceramicist, which can itself be further subdivided(perhaps with  a different pattern) and/or decorated. It will be then able to create useful output (in svg, and png), whether for use as a manual blank, or as input to an automated process. It will understand the idea of an assembly of contiguous shapes filling a plane, or area.
+Xndraw is an artist's tool to create tilable shapes, patterns and wallpapers(and some other patterns based on rotational symmetry, like some used in Roman mosaic) by freehand drawing. 
+
+Compilation and installation will place an executable, xndraw, in /usr/local/bin (unless some other prefix given), as well as some libraries and support files in $prefix/lib and $prefix/share 
+
+Launching xndraw opens a gtkmm window containing a drawing interface, as well as various other junk. You can draw by placing clicks, freehand mouse movement, and bezier paths . As you draw you see the pattern develop, based on the lines input. You can set strokewidth, transparency, and (buggily) colour. 
+
+Image output can be saved in png, and svg, and source paths can be read from and saved to svg.
+
+A word of warning: this is pre-alpha software and many features don't work, and program crashes are liable to occur. The interface is as ugly as sin, and contains elements that may not work, or even make sense.
+
+What there isn't(but should be):
+ability to create and identify a tilable shape
+usable history(so you can create same pattern twice - including the stroke/colour etc settings etc)
+ 
+
+It should be intuitively easy, and a joy to use, but also versatile and capable enough to be a useful tool, to, for example, create a tile shape for use by a ceramicist, which can itself be further subdivided(perhaps with  a different pattern) and/or decorated. It will be then able to create useful output (in svg, and png), whether for use as a manual blank, or as input to an automated process. It will understand the idea of an assembly of contiguous shapes filling a plane, or area.
 
 With wallpapers it will allow the creation of variations, in terms of colour, stroke, and transparency, and shape(s), and pattern(like the decoration of tiles)
 
