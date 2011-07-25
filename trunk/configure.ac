@@ -13,6 +13,10 @@ m4_define([xndraw_minor_version], [2])
 m4_define([xndraw_micro_version], [5])
 m4_define([xndraw_version], [xndraw_major_version.xndraw_minor_version.xndraw_micro_version])
 
+#if using date in distname, shouldn't it be calculated by make not configure?
+#since `make dist` makes the distribution
+#configure could run some otheer time
+#distdate=`date +%d%m%Y`
 
 #change bugaddress
 AC_INIT(xndraw_pkg_name,xndraw_version,[biggerbumme@yahoo.co.in])

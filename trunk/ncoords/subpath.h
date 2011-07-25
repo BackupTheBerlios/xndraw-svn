@@ -206,7 +206,9 @@ protected:
   std::pair<section_iterator, int> find_outside_section(){
   //const SubPath* otherpath(NULL);
     if(!sectioncache){create_sectioncache();}
-    
+    if(!sectioncache->size()){
+      throw xn_Error("emty subpath");
+    }
       section_iterator first= sectioncache->begin();
       section_iterator last= sectioncache->end();
      
@@ -249,29 +251,47 @@ public:
     return result;
   }
 
-std::deque<SectionShape<SubPath> > get_shapes(){
-  std::deque<SectionShape<SubPath> > result;
-  typedef std::deque<std::pair<section_type*,int> > tmpshape_container;
-  if(!sectioncache){
-    sectioncache=new std::deque<section_type>;
+  void create_sectioncache(){
     if(!sectioncache){
-      throw xn_Error("out of memory");
+      sectioncache=new std::deque<section_type>;
+      if(!sectioncache){
+	throw xn_Error("out of memory");
+      }
+      *sectioncache=as_sections();
     }
-    *sectioncache=as_sections();
   }
+
+  void create_shapescache(){
+typedef std::deque<std::pair<section_type*,int> > tmpshape_container;
+  
+  if(!sectioncache){create_sectioncache();}
   if(!(sectioncache->size())){throw xn_Error("empty subpath?");}
   else if(sectioncache->size()==1){
     std::pair<section_type*,int> outlineall(&(*(sectioncache->begin())), (int)SECTION_END);
     tmpshape_container shapesections;
     shapesections.push_back(outlineall);
   shape_type allshape(shapesections);
-    shapescache->push_back(allshape);
+
+  shapescache->push_back(std::pair<shape_type,int>(allshape, 0));
+
   }
   else{
-    //could skip the above and just make a SectionGroup?-but then problem(is_outside) goes recursif
+    //could skip the above and just make a SectionGroup?-but then problem(is_outside) goes recursif?
+    //but a lot of the code can be factored out and called from both SectionGroup and SubPath
+
     throw xn_Error("finishme");
   }
-  return *shapescache;
+}
+
+  ///rename to create_shapescache
+std::deque<SectionShape<SubPath>* > get_shapes(){
+  std::deque<SectionShape<SubPath>* > result;
+  if(!shapescache){create_shapescache();}
+  for (std::deque<std::pair<SectionShape<SubPath>, int> >::iterator w =shapescache->begin();w!=shapescache->end();w++){
+    result.push_back(&((*w).first));
+  }
+
+  return result;
   }
 
   const std::deque<SectionShape<SubPath> > get_shapes()const{

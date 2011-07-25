@@ -38,7 +38,10 @@ SUBDIRS = . appcommon ncoords clickpopper_threads  xn_instruction libcairoXndraw
 
 DIST_SUBDIRS = $(SUBDIRS)
 EXTRA_DIST = reconf.sh xndraw-1.pc.in
-
+#breaks on windows?
+#format date from most to least significant for sorting
+XN_DATE = `date  +%Y%m%d`
+DATEDIST_ARCHIVES = $(PACKAGE)-$(XN_DATE).tar.gz
 
 AM_CPPFLAGS                =  -I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/include  -I$(top_srcdir)/xndraw  -I$(top_srcdir)/ncoords -pipe  -Wall -ggdb -g -O0
 
@@ -47,6 +50,10 @@ doc-clean-recursive:
 
 doc-clean: doc-clean-recursive
 
+date-dist: dist
+
+	mv $(DIST_ARCHIVES) $(DATEDIST_ARCHIVES)
+#mv $(DIST_ARCHIVES) $(PACKAGE)-`date  +%d%m%Y`.tar.gz
 LOCALCLEANFILES = defines.h xndraw-1.pc
 
 edit-clean-local:

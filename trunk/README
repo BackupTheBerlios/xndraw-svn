@@ -1,6 +1,11 @@
-[this file needs revision]
+
 
 Xndraw is an artist's tool to create tilable shapes, patterns and wallpapers(and some other patterns based on rotational symmetry, like some used in Roman mosaic) by freehand drawing. 
+
+./configure -h
+./configure 
+make
+make install
 
 Compilation and installation will place an executable, xndraw, in /usr/local/bin (unless some other prefix given), as well as some libraries and support files in $prefix/lib and $prefix/share 
 
@@ -11,6 +16,7 @@ Image output can be saved in png, and svg, and source paths can be read from and
 A word of warning: this is pre-alpha software and many features don't work, and program crashes are liable to occur. The interface is as ugly as sin, and contains elements that may not work, or even make sense.
 
 What there isn't(but should be):
+boolean operations (that cairo doesnt provide!): mostly done, but some underlying calls need fixing(each SubPath needs to calculate an OR path to find is_outside() correctly)
 ability to create and identify a tilable shape
 usable history(so you can create same pattern twice - including the stroke/colour etc settings etc)
  
@@ -50,4 +56,4 @@ I'd like to create a self-bootstrapping 'image-share-and-edit cloud' lib, where 
 
  Important fixes is fix threading so important resources all have locks which are used in all the calls to them, without getting themselves wedged by bad design. 
 Then much more of calc and rendering can be done on background, keeping the gui always responsive
-john o'driscoll - biggerbumme@yahoo.co.in 
+john o'driscoll - subgeometer@berlios.de
